@@ -20,14 +20,12 @@ import Link from 'components/Link';
 import Summary from 'components/Summary';
 import styles from './Result.module.css';
 
-const HeatmapComponent = lazy(() => import('components/Heatmap'));
 
 interface Props {
   rides: RidesData;
-  mapboxToken: string | undefined;
 }
 
-const Result = ({ mapboxToken, rides }: Props) => {
+const Result = ({  rides }: Props) => {
   const options = useMemo(
     () =>
       Object.keys(rides).sort((a, b) => {
@@ -84,23 +82,6 @@ const Result = ({ mapboxToken, rides }: Props) => {
         years={options}
       />
       <Charts data={currentData} />
-      {mapboxToken ? (
-        <Suspense fallback={<div>Loading...</div>}>
-          <HeatmapComponent
-            accessToken={mapboxToken}
-            points={currentData._points}
-          />
-        </Suspense>
-      ) : (
-        <div className={styles.placeholder}>
-          <Link url="mapboxToken" className={styles.mapboxToken}>
-            <span className={styles.hintSetToken}>
-              {constants.setMapboxToken}
-            </span>
-          </Link>
-          <Illustration className={styles.blooming} name="blooming" />
-        </div>
-      )}
     </div>
   );
 };

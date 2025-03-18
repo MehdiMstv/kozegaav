@@ -11,10 +11,11 @@ import get from 'lodash.get';
 
 import type { DataStorage } from 'types/Storage';
 import type { RideHistoryResponse } from 'types/RideHistoryResponse';
+import type { FoodHistoryResponse } from 'types/FoodHistoryResponse';
 
 import { getReport, mergeReports } from 'manipulate';
 import { getErrorMessage, getLastRideDateMessage } from 'utils/messages';
-import { fetchSingleRidePage } from 'api';
+import { fetchSingleRidePage, fetchFoodAllOrders } from 'api';
 import constants from 'utils/constants';
 import { convertToLastVersion, getLastVersionNumber } from 'manipulate/convert';
 
@@ -32,7 +33,6 @@ const SnappExtension = () => {
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
   const [page, setPage] = useState<number>(0);
 
   const pendingTimer = useRef<NodeJS.Timeout>();
@@ -44,9 +44,6 @@ const SnappExtension = () => {
     });
     chrome.storage.local.get('result', ({ result }) => {
       setDataInStorage(result);
-    });
-    chrome.storage.local.get('mapboxToken', ({ mapboxToken }) => {
-      setMapboxToken(mapboxToken || '');
     });
 
     // clean-up
@@ -190,18 +187,12 @@ const SnappExtension = () => {
     });
   };
 
-  const handleChangeMapboxToken = (e: ChangeEvent<HTMLInputElement>) => {
-    setMapboxToken(e.target.value);
-    chrome.storage.local.set({ mapboxToken: e.target.value });
-  };
-
   if (window.location.href.includes('#result')) {
     if (dataInStorage) {
       return (
         <Suspense fallback={<div>Loading...</div>}>
           <ResultComponent
             rides={dataInStorage.rides}
-            mapboxToken={mapboxToken}
           />
         </Suspense>
       );
@@ -220,31 +211,6 @@ const SnappExtension = () => {
       <div className={styles.actions}>
         {accessToken && !error ? (
           <>
-            <span className={styles.hint}>{constants.mapboxHint}</span>
-            <Input
-              autoComplete="off"
-              icon="token"
-              id="mapbox"
-              onChange={handleChangeMapboxToken}
-              placeholder={constants.mapboxTokenPlaceholder}
-              type="text"
-              value={mapboxToken}
-            />
-            {mapboxToken ? (
-              <button
-                className={styles.mapboxButton}
-                disabled={true}
-                type="button"
-              >
-                {constants.mapboxTokenHasSet}
-              </button>
-            ) : (
-              <Link url="mapboxToken">
-                <button className={styles.mapboxButton} type="button">
-                  {constants.getMapboxToken}
-                </button>
-              </Link>
-            )}
             <button
               className={styles.snappButton}
               data-access-token={accessToken}
