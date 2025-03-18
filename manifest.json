@@ -1,16 +1,14 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "My Snapp",
   "short_name": "My Snapp",
   "version": "3.3.1",
   "description": "Analyze your Snapp rides",
   "permissions": ["tabs", "storage"],
-  "browser_action": {
+  "action": {
     "default_popup": "popup/index.html",
-    "default_title": "My Snapp"
-  },
-  "icons": {
-    "128": "assets/icon.png"
+    "default_title": "My Snapp",
+    "default_icon": "assets/icon.png"
   },
   "content_scripts": [
     {
@@ -19,9 +17,14 @@
     }
   ],
   "background": {
-    "persistent": false,
-    "scripts": ["background.js"]
+    "service_worker": "background.js",
+    "type": "module"
   },
-  "web_accessible_resources": ["assets/*"],
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+  "web_accessible_resources": [{
+    "resources": ["assets/*"],
+    "matches": ["https://app.snapp.taxi/*"]
+  }],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
 }
