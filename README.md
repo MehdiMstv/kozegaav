@@ -1,4 +1,4 @@
-# My Snapp Chrome Extension
+# KozeGaav Chrome Extension
 
 Getting your rides history from [Snapp application][snapppwa].
 
@@ -26,17 +26,6 @@ You can think of [Iranian version of Uber][snappwiki]. Their public repository i
 # Privacy Policy
 
 **All codes executed on the client-side** and the extension is only for **personal usage**. For analyzing the data we need to get your local `access-token` from the Snapp PWA. After signing in the token will be saved in chrome storage API. You can remove the extension to destroy your `accessToken` completely.
-
-# How to use Mapbox?
-
-You can get your interactive Heatmap of your rides.
-Based on [Mapbox documentation][mapdoc]:
-
-> Each Mapbox API has rate limits that cap the number of requests you can make against an endpoint.
-
-So it's better that to get our own `access-token` from Mapbox. After register and confirm your email, you can copy your Mapbox `access-token` from [here][maptoken] and add paste it into the extension.
-
-<img src="assests/MapboxToken.png" width="700">
 
 # Contributing [WIP]
 
@@ -72,11 +61,7 @@ npm run tada
 
 - [x] #bug car charts show duplicate data --- resolved in [!3][!3]
 
-[mapdoc]: https://docs.mapbox.com/api/#rate-limits
-[maptoken]: https://account.mapbox.com/access-tokens
 [snapppwa]: https://app.snapp.taxi
 [snappwiki]: https://en.wikipedia.org/wiki/Snapp!
 [snapprepo]: https://github.com/snapp-cab
 [chromestorage]: https://developer.chrome.com/extensions/storage
-[#1]: https://github.com/sepehrity/my-snapp-extension/issues/1
-[!3]: https://github.com/sepehrity/my-snapp-extension/pull/3
