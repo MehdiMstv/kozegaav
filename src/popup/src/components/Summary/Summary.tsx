@@ -3,6 +3,8 @@ import { memo, useMemo } from 'react';
 import type { Rides } from 'types/Rides';
 import type { RateObject } from 'types/Summary';
 import type { Props as YearSelectorProps } from 'components/YearSelector';
+import type { DataSource } from 'types/Storage';
+import type { SummaryKeys } from 'types/Summary';
 
 import {
   getSummaryItemMessage,
@@ -24,6 +26,7 @@ interface Props extends YearSelectorProps {
   rates: Rides['_rates'];
   ranges: Rides['_ranges'];
   summary: Rides['_summary'];
+  dataType?: DataSource;
 }
 
 const Summary = ({
@@ -33,6 +36,7 @@ const Summary = ({
   rates,
   summary,
   years,
+  dataType = 'snapp',
 }: Props) => {
   const {
     downloadRef,
@@ -46,22 +50,26 @@ const Summary = ({
   });
 
   const { TweetButton, tweetButtonProps } = useTweet({
-    hashtags: constants.hashtag,
+    hashtags: dataType === 'snapp' ? constants.hashtag : constants.snappfood,
   });
 
   const keys = useMemo(
     () =>
-      Object.keys(summary).sort(
-        (a, b) => summary_pattern.indexOf(a) - summary_pattern.indexOf(b)
-      ),
-    [summary]
+      (Object.keys(summary) as Array<'count' | 'prices' | 'distance' | 'durations'>)
+        .filter(key => dataType === 'snappfood' ? key !== 'distance' : true)
+        .sort(
+          (a, b) => summary_pattern.indexOf(a) - summary_pattern.indexOf(b)
+        ),
+    [summary, dataType]
   );
 
   const rate = useMemo<RateObject>(() => {
     return Object.entries(rates).reduce(
-      (acc: { count: number; sum: number }, [rate, { count }]) => {
-        acc.sum += count * Number(rate);
-        acc.count += count;
+      (acc: { count: number; sum: number }, [rate, value]) => {
+        if (typeof value === 'object' && 'count' in value) {
+          acc.sum += value.count * Number(rate);
+          acc.count += value.count;
+        }
         return acc;
       },
       { count: 0, sum: 0 }
@@ -76,23 +84,25 @@ const Summary = ({
         width={280}
         height={200}
       />
-      <ScrollDown />
+      <ScrollDown dataType={dataType} />
       <YearSelector
         active={active}
         style={buttonStyle}
         onSelectYear={onSelectYear}
         years={years}
       />
-      <div className={styles.box} style={wrapperStyle}>
+      <div className={styles.box} style={wrapperStyle} data-type={dataType}>
         <div className={styles.buttonWrapper}>
           <DownloadButton {...downloadButtonProps} />
           <TweetButton style={buttonStyle} {...tweetButtonProps} />
         </div>
         {keys.map((key) => {
-          const value = getSummaryItemMessage(summary[key], key);
-          return <SummaryItem key={key} type={key} value={value} />;
+          const value = summary[key] !== undefined ? getSummaryItemMessage(summary[key], key as keyof typeof summary, dataType) : { message: '0', unit: '' };
+          return <SummaryItem key={key} type={key as (SummaryKeys | 'durations')} value={value} dataType={dataType} />;
         })}
-        <SummaryItem type="rate" value={getRateSummaryMessage(rate)} />
+        {dataType === 'snapp' && (
+          <SummaryItem type="rate" value={getRateSummaryMessage(rate, dataType)} dataType={dataType} />
+        )}
         <div className={styles.date}>
           {getStartAndEndDate(ranges.start, ranges.end)}
         </div>

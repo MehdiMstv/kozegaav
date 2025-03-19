@@ -49,6 +49,49 @@ const setIcon = async (tabId: number) => {
   }
 };
 
+// Fetch Snappfood orders through the background script to avoid CORS issues
+const fetchSnappfoodOrders = async (url: string): Promise<any> => {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': navigator.userAgent,
+        'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Important to include cookies for JWT authentication
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error(`${response.status}`);
+      }
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching Snappfood orders:', error);
+    throw error;
+  }
+};
+
+// Listen for messages from content scripts or popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'fetchSnappfoodOrders') {
+    fetchSnappfoodOrders(message.url)
+      .then(data => {
+        sendResponse({ data });
+      })
+      .catch(error => {
+        sendResponse({ error: error.message });
+      });
+    // Return true to indicate you wish to send a response asynchronously
+    return true;
+  }
+});
+
 // Listen for installation/update
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed/updated');

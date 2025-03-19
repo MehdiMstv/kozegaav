@@ -36,8 +36,35 @@
 }
 
 .snappButton {
-  margin: 1rem 0;
-  background-color: #00d16f;
+  background-color: #02d181;
+  border-radius: 8px;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  height: 40px;
+  margin-top: 10px;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.snappfoodButton {
+  background-color: #ff0032;
+  border-radius: 8px;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  height: 40px;
+  margin-top: 10px;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.buttonsContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .lastRideDate {

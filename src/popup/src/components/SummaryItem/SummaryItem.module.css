@@ -9,6 +9,14 @@
   flex: none;
 }
 
+.icon[data-type="snappfood"] {
+  color: #fe02a6;
+}
+
+.icon[data-type="snapp"] {
+  color: #00d16f;
+}
+
 .wrapper {
   display: flex;
   flex-direction: column;

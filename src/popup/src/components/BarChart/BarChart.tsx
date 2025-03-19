@@ -4,10 +4,11 @@ import { ResponsiveBar } from '@nivo/bar';
 import type { LabelFormatter } from '@nivo/bar';
 import type { BarChartTypes, BarChartData } from 'types/Charts';
 import type { CountPrice } from 'types/Rides';
+import type { DataSource } from 'types/Storage';
 
 import { barChartDownloadButton, BarChartStyles } from 'utils/styles';
 import { getPrice } from 'utils/number';
-import { mapToPersian, getTooltipMessage, getExportName } from 'utils/messages';
+import { mapToPersian, getTooltipMessage, getExportName, getMapToPersian } from 'utils/messages';
 import constants from 'utils/constants';
 import useDownload from 'hooks/useDownload';
 import useWindowSize from 'hooks/useWindowResize';
@@ -18,9 +19,10 @@ type Props = {
   color: string;
   data: BarChartData[];
   type: BarChartTypes;
+  dataType?: DataSource;
 };
 
-const BarChart = ({ color, data, type }: Props) => {
+const BarChart = ({ color, data, type, dataType = 'snapp' }: Props) => {
   const size = useWindowSize();
   const { downloadRef, wrapperStyle, DownloadButton, downloadButtonProps } =
     useDownload({
@@ -55,7 +57,7 @@ const BarChart = ({ color, data, type }: Props) => {
             tickSize: 5,
             tickPadding: 5,
             tickRotation: 0,
-            legend: mapToPersian[type],
+            legend: getMapToPersian(type, dataType),
             legendPosition: 'middle',
             legendOffset: 80,
           }}
@@ -77,7 +79,8 @@ const BarChart = ({ color, data, type }: Props) => {
                   count,
                   price as number,
                   value as string,
-                  type
+                  type,
+                  dataType
                 )}
               </span>
             );

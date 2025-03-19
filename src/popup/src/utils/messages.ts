@@ -1,5 +1,6 @@
 import type { BarChartTypes } from 'types/Charts';
 import type { RateObject, SummaryItemType, SummaryKeys } from 'types/Summary';
+import type { DataSource } from 'types/Storage';
 
 import { formattedNumber, getPrice } from './number';
 
@@ -7,13 +8,33 @@ const SNAPP_BIKE = 'اسنپ بایک';
 
 const isSnappBike = (name: string) => name === SNAPP_BIKE;
 
-const formatCarName = (name: string) => `ماشین ${name}`;
-
-const getRidesCount = (count: React.ReactText) => {
-  return `${count} سفر`;
+const formatCarName = (name: string, dataType: DataSource = 'snapp') => {
+  if (dataType === 'snappfood') return name;
+  return `ماشین ${name}`;
 };
 
-type GetTypeFormatType = { format: (value: string) => string };
+const getRidesCount = (count: React.ReactText, dataType: DataSource = 'snapp') => {
+  return `${count} ${dataType === 'snapp' ? 'سفر' : 'سفارش'}`;
+};
+
+type GetTypeFormatType = { 
+  format: (value: string, dataType?: DataSource) => string 
+};
+
+const MONTHS = [
+  'فروردین',
+  'اردیبهشت',
+  'خرداد',
+  'تیر',
+  'مرداد',
+  'شهریور',
+  'مهر',
+  'آبان',
+  'آذر',
+  'دی',
+  'بهمن',
+  'اسفند',
+];
 
 const getTypeFormat: {
   [type in BarChartTypes]: GetTypeFormatType;
@@ -21,32 +42,60 @@ const getTypeFormat: {
   _hours: { format: (value) => `ساعت ${value}` },
   _weeks: { format: (value) => `${value}` },
   _days: { format: (value) => `روز ${value}ام` },
-  _months: { format: (value) => `${value} ماه` },
+  _months: { 
+    format: (value) => {
+      const monthIndex = parseInt(value, 10);
+      if (!isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
+        return MONTHS[monthIndex];
+      }
+      return `${value} ماه`;
+    } 
+  },
   _years: { format: (value) => `سال ${value}` },
   _types: { format: (value) => `${value}` },
   _rates: { format: (value) => `${value} امتیاز` },
   _cars: {
-    format: (value) => {
-      return isSnappBike(value) ? SNAPP_BIKE : formatCarName(value);
+    format: (value, dataType = 'snapp') => {
+      if (isSnappBike(value)) return SNAPP_BIKE;
+      return formatCarName(value, dataType);
     },
   },
 };
 
 const getFormattedSummary: {
-  [type in SummaryKeys]: {
-    format: (value: number) => SummaryItemType;
+  [type: string]: {
+    format: (value: number, dataType?: DataSource) => SummaryItemType;
   };
 } = {
   count: {
-    format: (value) => {
-      return { message: formattedNumber(value), unit: 'سفر' };
+    format: (value: number, dataType: DataSource = 'snapp') => {
+      return { 
+        message: formattedNumber(value), 
+        unit: dataType === 'snapp' ? 'سفر' : 'سفارش' 
+      };
     },
   },
   prices: {
-    format: (value) => {
+    format: (value: number) => {
       return {
         message: getPrice(Number(value), false),
         unit: 'تومان',
+      };
+    },
+  },
+  distance: {
+    format: (value: number) => {
+      return {
+        message: formattedNumber(value, 2),
+        unit: 'کیلومتر',
+      };
+    },
+  },
+  durations: {
+    format: (value: number) => {
+      return {
+        message: formattedNumber(value, 0),
+        unit: 'دقیقه',
       };
     },
   },
@@ -56,23 +105,37 @@ export const getTooltipMessage = (
   count: React.ReactText,
   price: number,
   value: string,
-  type: BarChartTypes
+  type: BarChartTypes,
+  dataType: DataSource = 'snapp'
 ) => {
-  return `${getTypeFormat[type].format(value)} | ${getPrice(
-    price
-  )} (${getRidesCount(count)})`;
+  const formattedValue = getTypeFormat[type].format(value, dataType);
+  return `${formattedValue} | ${getPrice(price)} (${getRidesCount(count, dataType)})`;
 };
 
-export const getSummaryItemMessage = (value: number, type: SummaryKeys) => {
-  return getFormattedSummary[type].format(value);
+export const getSummaryItemMessage = (value: number, type: string, dataType: DataSource = 'snapp') => {
+  if (!getFormattedSummary[type]) {
+    // Fallback for any unknown summary types
+    return {
+      message: formattedNumber(value),
+      unit: '',
+    };
+  }
+  
+  // Always try to pass the dataType parameter
+  try {
+    return getFormattedSummary[type].format(value, dataType);
+  } catch (e) {
+    // If it doesn't accept the dataType parameter, call with just the value
+    return getFormattedSummary[type].format(value);
+  }
 };
 
-export const getRateSummaryMessage = ({
-  count,
-  sum,
-}: RateObject): SummaryItemType => {
+export const getRateSummaryMessage = (
+  { count, sum }: RateObject,
+  dataType: DataSource = 'snapp'
+): SummaryItemType => {
   return {
-    description: `${count} سفر`,
+    description: `${count} ${dataType === 'snapp' ? 'سفر' : 'سفارش'}`,
     message: formattedNumber(sum / count, 2),
     unit: 'امتیاز',
   };
@@ -90,6 +153,13 @@ export const mapToPersian: { [type in BarChartTypes]: string } = {
   _cars: 'مدل ماشین',
   _rates: 'امتیاز سفر',
   _types: 'نوع سرویس',
+};
+
+export const getMapToPersian = (type: BarChartTypes, dataType: DataSource = 'snapp'): string => {
+  if (type === '_cars' && dataType === 'snappfood') {
+    return 'رستوران';
+  }
+  return mapToPersian[type];
 };
 
 export const getExportName: { [type in BarChartTypes]: string } = {

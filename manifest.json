@@ -13,7 +13,7 @@
   "content_scripts": [
     {
       "js": ["contentscript.js"],
-      "matches": ["https://app.snapp.taxi/*"]
+      "matches": ["https://app.snapp.taxi/*", "https://snappfood.ir/*"]
     }
   ],
   "background": {
@@ -22,7 +22,7 @@
   },
   "web_accessible_resources": [{
     "resources": ["assets/*"],
-    "matches": ["https://app.snapp.taxi/*"]
+    "matches": ["https://app.snapp.taxi/*", "https://snappfood.ir/*"]
   }],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"

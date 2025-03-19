@@ -1,48 +1,92 @@
 import { useMemo } from 'react';
 
-import type { CountPriceObject, Rides } from 'types/Rides';
+import type { CountPriceObject, Rides, Orders, CommonData } from 'types/Rides';
 import type { BarChartsObject, BarChartTypes } from 'types/Charts';
+import type { DataSource } from 'types/Storage';
 
 import { colors, carColors } from 'utils/colors';
 import { getCarsChunks, getSortedPattern } from 'utils/helpers';
-import { week_pattern, month_pattern } from 'utils/patterns';
+import { week_pattern, month_pattern, day_pattern } from 'utils/patterns';
 
 import BarChart from 'components/BarChart';
 
+// Persian month names
+const MONTHS = [
+  'فروردین',
+  'اردیبهشت',
+  'خرداد',
+  'تیر',
+  'مرداد',
+  'شهریور',
+  'مهر',
+  'آبان',
+  'آذر',
+  'دی',
+  'بهمن',
+  'اسفند',
+];
+
 interface Props {
-  data: Rides;
+  data: Rides | Orders;
+  dataType?: DataSource;
 }
 
 const Charts = ({
-  data: { _rates, _types, _hours, _days, _weeks, _months, _years, _cars },
+  data,
+  dataType = 'snapp',
 }: Props) => {
+  // Extract properties safely
+  const { _rates, _types, _hours, _days, _weeks, _months, _years, _cars } = data as CommonData & {
+    _rates?: CountPriceObject;
+    _cars?: CountPriceObject;
+  };
+
+  // Transform month numbers to Persian names
+  const transformedMonths = useMemo(() => {
+    if (!_months) return {};
+    
+    const result: CountPriceObject = {};
+    Object.entries(_months).forEach(([monthIndex, data]) => {
+      const index = parseInt(monthIndex, 10);
+      if (!isNaN(index) && index >= 0 && index < 12) {
+        result[MONTHS[index]] = data;
+      } else {
+        result[monthIndex] = data;
+      }
+    });
+    return result;
+  }, [_months]);
+
   const BarCharts: BarChartsObject = useMemo(() => {
-    return {
-      _rates,
-      _types,
-      _hours,
-      _days,
-      _weeks: getSortedPattern(_weeks, week_pattern),
-      _months: getSortedPattern(_months, month_pattern),
-      ...(_years && { _years }),
-    };
-  }, [_rates, _types, _hours, _days, _weeks, _months, _years]);
+    const charts: BarChartsObject = {};
+    
+    if (_rates && dataType === 'snapp') charts._rates = _rates;
+    if (_types) charts._types = _types;
+    if (_hours) charts._hours = _hours;
+    if (_days) charts._days = getSortedPattern(_days, day_pattern);
+    
+    if (_weeks) charts._weeks = getSortedPattern(_weeks, week_pattern);
+    if (transformedMonths) charts._months = getSortedPattern(transformedMonths, month_pattern);
+    if (_years) charts._years = _years;
+    
+    return charts;
+  }, [_rates, _types, _hours, _days, _weeks, transformedMonths, _years, dataType]);
 
   const CarCharts: CountPriceObject[] = useMemo(
-    () => getCarsChunks(getSortedPattern(_cars, [], 'count')),
+    () => _cars ? getCarsChunks(getSortedPattern(_cars, [], 'count')) : [],
     [_cars]
   );
 
   return (
     <>
-      {Object.keys(BarCharts).map((type, index) => {
-        const chart_data = BarCharts[type];
+      {(Object.keys(BarCharts) as string[]).map((type: string, index: number) => {
+        const chart_data = BarCharts[type as BarChartTypes] || {};
         return (
           <BarChart
             key={type}
             color={colors[index]}
-            type={type}
-            data={Object.keys(chart_data).map((key) => {
+            type={type as BarChartTypes}
+            data={(Object.keys(chart_data) as string[]).map((key: string) => {
               const { count, price } = chart_data[key];
               return {
                 [type]: key,
@@ -50,6 +94,7 @@ const Charts = ({
                 price,
               };
             })}
+            dataType={dataType}
           />
         );
       })}
@@ -60,7 +105,7 @@ const Charts = ({
             key={`${type}_${index}`}
             color={carColors[index]}
             type={type}
-            data={Object.keys(chart_data).map((key) => {
+            data={(Object.keys(chart_data) as string[]).map((key: string) => {
               const { count, price } = chart_data[key];
               return {
                 [type]: key,
@@ -68,6 +113,7 @@ const Charts = ({
                 price,
               };
             })}
+            dataType={dataType}
           />
         );
       })}

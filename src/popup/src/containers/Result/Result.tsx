@@ -9,7 +9,8 @@ import {
 } from 'react';
 import setWith from 'lodash.setwith';
 
-import type { Rides, RidesData } from 'types/Rides';
+import type { Rides, RidesData, Orders, OrdersData, CommonData } from 'types/Rides';
+import type { DataSource, SnappTaxiDataStorage, SnappfoodDataStorage } from 'types/Storage';
 
 import constants from 'utils/constants';
 import { data_pattern } from 'utils/patterns';
@@ -22,18 +23,25 @@ import styles from './Result.module.css';
 
 
 interface Props {
-  rides: RidesData;
+  data: SnappTaxiDataStorage | SnappfoodDataStorage;
+  mapboxToken?: string;
+  dataType?: DataSource;
 }
 
-const Result = ({  rides }: Props) => {
+const Result = ({ data, mapboxToken, dataType = 'snapp' }: Props) => {
+  // Extract the data based on type
+  const displayData = dataType === 'snapp' 
+    ? (data as SnappTaxiDataStorage).rides 
+    : (data as SnappfoodDataStorage).orders;
+  
   const options = useMemo(
     () =>
-      Object.keys(rides).sort((a, b) => {
+      Object.keys(displayData).sort((a, b) => {
         return (
           data_pattern.indexOf(b as string) - data_pattern.indexOf(a as string)
         );
       }),
-    [rides]
+    [displayData]
   );
   const [year, setYear] = useState<ReactText>(options[0]);
 
@@ -45,12 +53,12 @@ const Result = ({  rides }: Props) => {
   }, []);
 
   const getTotal = useMemo(() => {
-    const _years = Object.keys(rides).reduce((tmp, year) => {
+    const _years = Object.keys(displayData).reduce((tmp, year) => {
       if (year === 'total') {
         return tmp;
       }
 
-      const { _summary } = rides[year] as Required<Rides>;
+      const { _summary } = displayData[year] as CommonData;
 
       // add _years chart
       setWith(tmp, [year], {
@@ -61,15 +69,22 @@ const Result = ({  rides }: Props) => {
       return tmp;
     }, {});
 
-    rides['total']._years = _years;
-
-    return rides['total'];
-  }, [rides]);
+    if (displayData['total']) {
+      displayData['total']._years = _years;
+      return displayData['total'];
+    }
+    
+    return null;
+  }, [displayData]);
 
   const currentData = useMemo(
-    () => (year === 'total' ? getTotal : rides[year]),
-    [rides, year, getTotal]
+    () => (year === 'total' && getTotal ? getTotal : displayData[year]),
+    [displayData, year, getTotal]
   );
+
+  if (!currentData) {
+    return <div className={styles.loadData}>{constants.loadData}</div>;
+  }
 
   return (
     <div className={styles.result}>
@@ -77,11 +92,12 @@ const Result = ({  rides }: Props) => {
         active={year}
         onSelectYear={handleSelectYear}
         ranges={currentData._ranges}
-        rates={currentData._rates}
+        rates={currentData._rates || {}}
         summary={currentData._summary}
         years={options}
+        dataType={dataType}
       />
-      <Charts data={currentData} />
+      <Charts data={currentData} dataType={dataType} />
     </div>
   );
 };
