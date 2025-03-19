@@ -18,6 +18,7 @@ import Twitter from './Twitter';
 
 interface Props extends SVGProps {
   type: IconNames;
+  color?: string;
 }
 
 const getIcon: { [icon in IconNames]: FC<SVGProps> } = {
@@ -30,9 +31,9 @@ const getIcon: { [icon in IconNames]: FC<SVGProps> } = {
   twitter: Twitter,
 };
 
-const Icon = ({ type, className, ...rest }: Props) => {
+const Icon = ({ type, className, color, ...rest }: Props) => {
   const SVGIcon = getIcon[type];
-  return <SVGIcon className={className} {...rest} />;
+  return <SVGIcon className={className} color={color} {...rest} />;
 };
 
 export default memo(Icon);

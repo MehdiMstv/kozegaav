@@ -9,13 +9,13 @@ import {
 } from 'react';
 import get from 'lodash.get';
 
-import type { DataStorage } from 'types/Storage';
+import type { DataSource, SnappTaxiDataStorage, SnappfoodDataStorage } from 'types/Storage';
 import type { RideHistoryResponse } from 'types/RideHistoryResponse';
-import type { FoodHistoryResponse } from 'types/FoodHistoryResponse';
+import type { SnappfoodOrder } from 'types/SnappfoodOrderResponse';
 
-import { getReport, mergeReports } from 'manipulate';
+import { getReport, mergeReports, getSnappfoodReport } from 'manipulate';
 import { getErrorMessage, getLastRideDateMessage } from 'utils/messages';
-import { fetchSingleRidePage, fetchFoodAllOrders } from 'api';
+import { fetchSingleRidePage, fetchSnappfoodOrderPage } from 'api';
 import constants from 'utils/constants';
 import { convertToLastVersion, getLastVersionNumber } from 'manipulate/convert';
 
@@ -29,21 +29,28 @@ const ResultComponent = lazy(() => import('containers/Result'));
 
 const SnappExtension = () => {
   const [accessToken, setAccessToken] = useState<string>('');
-  const [dataInStorage, setDataInStorage] = useState<DataStorage | null>(null);
+  const [dataInStorage, setDataInStorage] = useState<SnappTaxiDataStorage | SnappfoodDataStorage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [mapboxToken, setMapboxToken] = useState<string>('');
   const [page, setPage] = useState<number>(0);
+  const [isSnappfoodLoading, setIsSnappfoodLoading] = useState<boolean>(false);
+  const [snappfoodPage, setSnappfoodPage] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<'snapp' | 'snappfood'>('snapp');
+  const [currentData, setCurrentData] = useState<SnappTaxiDataStorage | SnappfoodDataStorage | null>(null);
+  const [resultDataType, setResultDataType] = useState<DataSource>('snapp');
+  const [isResultPage, setIsResultPage] = useState<boolean>(false);
 
   const pendingTimer = useRef<NodeJS.Timeout>();
-
-  // set Snapp access token
+  
+  // set Snapp access token and mapbox token
   useEffect(() => {
     chrome.storage.local.get('accessToken', ({ accessToken }) => {
       setAccessToken(accessToken);
     });
-    chrome.storage.local.get('result', ({ result }) => {
-      setDataInStorage(result);
+    chrome.storage.local.get('mapboxToken', ({ mapboxToken }) => {
+      setMapboxToken(mapboxToken || '');
     });
 
     // clean-up
@@ -53,6 +60,54 @@ const SnappExtension = () => {
       }
     };
   }, []);
+
+  // Set data based on active tab
+  useEffect(() => {
+    chrome.storage.local.get(['rideResult', 'foodResult'], (result) => {
+      setDataInStorage(activeTab === 'snapp' ? result.rideResult : result.foodResult);
+    });
+  }, [activeTab]);
+
+  // Check if we're on the result page
+  useEffect(() => {
+    setIsResultPage(window.location.href.includes('#result'));
+  }, []);
+
+  // Load result data when in result page
+  useEffect(() => {
+    if (isResultPage) {
+      // Determine which data to display based on URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const dataTypeParam = urlParams.get('type') || 'snapp';
+      const dataType = dataTypeParam === 'snappfood' ? 'snappfood' as const : 'snapp' as const;
+      setResultDataType(dataType);
+      
+      // Get both data types
+      chrome.storage.local.get(['rideResult', 'foodResult'], (result) => {
+        const rideData = result.rideResult;
+        const foodData = result.foodResult;
+        const data = dataType === 'snappfood' ? foodData : rideData;
+        console.log("Loading data:", data);
+        setCurrentData(data);
+      });
+    }
+  }, [isResultPage]);
+
+  // Render the result page if we're on the result route
+  if (isResultPage) {
+    if (currentData) {
+      return (
+        <Suspense fallback={<div>Loading...</div>}>
+          <ResultComponent
+            data={currentData}
+            mapboxToken={mapboxToken}
+            dataType={resultDataType}
+          />
+        </Suspense>
+      );
+    }
+    return <div className={styles.loadData}>{constants.loadData}</div>;
+  }
 
   const getSingleRidePage = async (accessToken: string, page: number) => {
     try {
@@ -121,21 +176,86 @@ const SnappExtension = () => {
           lastRideId: lastRide.human_readable_id,
           version: getLastVersionNumber(),
           forceUpdate: false,
+          dataType: 'snapp'
         },
-      },
+      } as SnappTaxiDataStorage,
       true
     );
     setIsFetching(false);
   };
 
+  // fetch a single page of Snappfood orders
+  const getSnappfoodOrderPage = async (page: number) => {
+    try {
+      return await fetchSnappfoodOrderPage(page);
+    } catch (e) {
+      const error =
+        getErrorMessage[(e as Error).message] || constants.somethingWentWrong;
+      setError(error);
+      setIsSnappfoodLoading(false);
+      return null;
+    }
+  };
+
+  // fetch all Snappfood orders
+  const getAllSnappfoodOrders = async (): Promise<SnappfoodOrder[]> => {
+    let page = 0;
+    setSnappfoodPage(page);
+    let response = await getSnappfoodOrderPage(page++);
+    
+    if (!response) return [];
+    
+    let orders = [...response.data.orders];
+    const totalPages = Math.ceil(response.data.count / response.data.pageSize);
+    
+    while (page < totalPages) {
+      setSnappfoodPage(page);
+      response = await getSnappfoodOrderPage(page++);
+      if (response) {
+        orders = [...orders, ...response.data.orders];
+      }
+    }
+    
+    return orders;
+  };
+
+  // process Snappfood data
+  const prepareSnappfoodData = async () => {
+    setIsSnappfoodLoading(true);
+    const orders = await getAllSnappfoodOrders();
+    const snappfoodData = getSnappfoodReport(orders);
+    
+    handleShowResult(
+      {
+        orders: snappfoodData,
+        meta: {
+          lastRideId: orders.length > 0 ? orders[0].orderCode : '',
+          version: getLastVersionNumber(),
+          forceUpdate: false,
+          dataType: 'snappfood'
+        },
+      } as SnappfoodDataStorage,
+      true
+    );
+    setIsSnappfoodLoading(false);
+  };
+
+  const handleGetSnappfoodOrders = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setActiveTab('snappfood');
+    prepareSnappfoodData();
+  };
+
   const handleGetRidesHistory = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setActiveTab('snapp');
+    
     if (e.target instanceof HTMLElement) {
       const accessToken = e.target.dataset.accessToken as string;
 
-      if (dataInStorage) {
-        const { meta, rides } = convertToLastVersion(dataInStorage);
+      if (dataInStorage && 'rides' in dataInStorage) {
+        const { meta, rides } = convertToLastVersion(dataInStorage as SnappTaxiDataStorage);
         if (meta.forceUpdate) {
           prepareRidesData(accessToken);
         } else {
@@ -148,7 +268,7 @@ const SnappExtension = () => {
             const isUpdated = lastRideId === meta.lastRideId;
 
             if (isUpdated) {
-              handleShowResult({ rides, meta }, false);
+              handleShowResult({ rides, meta } as SnappTaxiDataStorage, false);
             } else {
               // fetch new rides history based on last ride id
               const ridesHistory = await getNewRides(
@@ -156,9 +276,9 @@ const SnappExtension = () => {
                 meta.lastRideId
               );
               const newRides = getReport(ridesHistory);
-              const rides = mergeReports(newRides, dataInStorage.rides);
+              const rides = mergeReports(newRides, (dataInStorage as SnappTaxiDataStorage).rides);
 
-              handleShowResult({ rides, meta: { ...meta, lastRideId } }, false);
+              handleShowResult({ rides, meta: { ...meta, lastRideId } } as SnappTaxiDataStorage, false);
             }
           }
         }
@@ -168,11 +288,14 @@ const SnappExtension = () => {
     }
   };
 
-  const handleShowResult = (result: DataStorage, withLoading: boolean) => {
-    chrome.storage.local.set({ result }, () => {
+  const handleShowResult = (data: SnappTaxiDataStorage | SnappfoodDataStorage, withLoading: boolean) => {
+    const storageKey = data.meta.dataType === 'snappfood' ? 'foodResult' : 'rideResult';
+    
+    chrome.storage.local.set({ [storageKey]: data }, () => {
       if (withLoading) {
         pendingTimer.current = setTimeout(() => {
           setIsLoading(false);
+          setIsSnappfoodLoading(false);
           handleOpenNewTab();
         }, 3000);
       } else {
@@ -183,25 +306,21 @@ const SnappExtension = () => {
 
   const handleOpenNewTab = () => {
     chrome.tabs.create({
-      url: chrome.runtime.getURL('popup/index.html#result'),
+      url: chrome.runtime.getURL(`popup/index.html?type=${activeTab}#result`),
     });
   };
 
-  if (window.location.href.includes('#result')) {
-    if (dataInStorage) {
-      return (
-        <Suspense fallback={<div>Loading...</div>}>
-          <ResultComponent
-            rides={dataInStorage.rides}
-          />
-        </Suspense>
-      );
-    }
-    return <div className={styles.loadData}>{constants.loadData}</div>;
-  }
+  const handleChangeMapboxToken = (e: ChangeEvent<HTMLInputElement>) => {
+    setMapboxToken(e.target.value);
+    chrome.storage.local.set({ mapboxToken: e.target.value });
+  };
 
   if (isLoading) {
     return <CarAnimation isFetching={isFetching} speed={page} />;
+  }
+
+  if (isSnappfoodLoading) {
+    return <CarAnimation isFetching={false} speed={snappfoodPage} />;
   }
 
   const lastRideEndRange = get(dataInStorage, 'rides.total._ranges.end', '');
@@ -211,15 +330,49 @@ const SnappExtension = () => {
       <div className={styles.actions}>
         {accessToken && !error ? (
           <>
-            <button
-              className={styles.snappButton}
-              data-access-token={accessToken}
-              disabled={!accessToken}
-              onClick={handleGetRidesHistory}
-              type="button"
-            >
-              {constants.getAnalytics}
-            </button>
+            <span className={styles.hint}>{constants.mapboxHint}</span>
+            <Input
+              autoComplete="off"
+              icon="token"
+              id="mapbox"
+              onChange={handleChangeMapboxToken}
+              placeholder={constants.mapboxTokenPlaceholder}
+              type="text"
+              value={mapboxToken}
+            />
+            {mapboxToken ? (
+              <button
+                className={styles.mapboxButton}
+                disabled={true}
+                type="button"
+              >
+                {constants.mapboxTokenHasSet}
+              </button>
+            ) : (
+              <Link url="mapboxToken">
+                <button className={styles.mapboxButton} type="button">
+                  {constants.getMapboxToken}
+                </button>
+              </Link>
+            )}
+            <div className={styles.buttonsContainer}>
+              <button
+                className={styles.snappButton}
+                data-access-token={accessToken}
+                onClick={handleGetRidesHistory}
+                type="button"
+              >
+                {constants.getSnappRides}
+              </button>
+              
+              <button
+                className={styles.snappfoodButton}
+                onClick={handleGetSnappfoodOrders}
+                type="button"
+              >
+                {constants.getSnappfoodOrders}
+              </button>
+            </div>
             <span className={styles.lastRideDate}>
               {lastRideEndRange && getLastRideDateMessage(lastRideEndRange)}
             </span>

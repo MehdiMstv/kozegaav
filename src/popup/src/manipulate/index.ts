@@ -10,13 +10,18 @@ import type {
   CountPriceObject,
   Rides,
   RidesData,
+  OrdersData,
+  Orders
 } from 'types/Rides';
+import type { SnappfoodOrder } from 'types/SnappfoodOrderResponse';
 
 import {
   getCarName,
   getTimeAndDateOfRide,
   getWeekDay,
   isCanceledRide,
+  getTimeAndDateForSnappfood,
+  getWeekDayForSnappfood, getDayForSnappfood, getMonthForSnappfood
 } from './helpers';
 
 type CountPriceKeys = keyof PickByValue<Required<Rides>, CountPriceObject>;
@@ -305,4 +310,200 @@ export const getReport = (response: RideHistoryResponse[]) => {
     },
     {}
   );
+};
+
+export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
+  const result: OrdersData = {};
+
+  for (const order of orders) {
+    if (order.orderCanceled) {
+      continue;
+    }
+
+    const {
+      startedAtObject,
+      totalPrice,
+      vendorTitle,
+      orderAddress,
+      newTypeTitle,
+      superTypeAlias,
+      deliveryTime,
+      vendorLatitude,
+      vendorLongitude,
+    } = order;
+
+    
+    const date = new Date(startedAtObject.date);
+    const persianDate = date.toLocaleString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' as const }).split(' ');
+    const year = persianDate[0];
+    const weekDay = persianDate[2].replace(',', '');
+    const hour = date.getHours();
+    const timeAndDateOfRide = getTimeAndDateForSnappfood(startedAtObject.date);
+    const week = persianDate[3];
+    const month = persianDate[1];
+
+    if (!result[year]) {
+      setWith(result, [year], {});
+    }
+
+    if (!result.total) {
+      setWith(result, ['total'], {});
+    }
+
+    for (const resYear of [year, 'total']) {
+      // add to car
+      setWith(
+        result,
+        [resYear, '_restaurants', vendorTitle],
+        mergeSumAndCount(
+          get(result, [resYear, '_restaurants', vendorTitle]),
+          { count: 1, price: totalPrice }
+        ),
+        Object
+      );
+
+      // add to type
+      setWith(
+        result,
+        [resYear, '_types', newTypeTitle || superTypeAlias],
+        mergeSumAndCount(
+          get(result, [resYear, '_types', newTypeTitle || superTypeAlias]),
+          { count: 1, price: totalPrice }
+        ),
+        Object
+      );
+
+      // add to hour
+      setWith(
+        result,
+        [resYear, '_hours', hour],
+        mergeSumAndCount(get(result, [resYear, '_hours', hour]), {
+          count: 1,
+          price: totalPrice,
+        }),
+        Object
+      );
+
+      // add to day
+      setWith(
+        result,
+        [resYear, '_days', weekDay],
+        mergeSumAndCount(get(result, [resYear, '_days', weekDay]), {
+          count: 1,
+          price: totalPrice,
+        }),
+        Object
+      );
+
+      // add to week
+      setWith(
+        result,
+        [resYear, '_weeks', week],
+        mergeSumAndCount(get(result, [resYear, '_weeks', week]), {
+          count: 1,
+          price: totalPrice,
+        }),
+        Object
+      );
+
+      // add to month
+      setWith(
+        result,
+        [resYear, '_months', month],
+        mergeSumAndCount(get(result, [resYear, '_months', month]), {
+          count: 1,
+          price: totalPrice,
+        }),
+        Object
+      );
+
+      // add to overall
+      if (!get(result, [resYear, '_summary'])) {
+        setWith(
+          result,
+          [resYear, '_summary'],
+          {
+            count: 0,
+            prices: 0,
+            distance: 0,
+            durations: 0,
+          },
+          Object
+        );
+      }
+
+      const summary = get(result, [resYear, '_summary']);
+      if (summary) {
+        summary.count++;
+        summary.prices += totalPrice;
+        
+        if ('durations' in summary && typeof summary.durations === 'number') {
+          summary.durations += deliveryTime || 0;
+        }
+      }
+
+      // add rate to overall
+      if (!get(result, [resYear, '_rates'])) {
+        setWith(
+          result,
+          [resYear, '_rates'],
+          {
+            count: 0,
+            rated_count: 0,
+            rates: 0,
+          },
+          Object
+        );
+      }
+
+
+      // add to ranges
+      if (!get(result, [resYear, '_ranges'])) {
+        setWith(
+          result,
+          [resYear, '_ranges'],
+          {
+            start: timeAndDateOfRide.rideTime,
+            end: timeAndDateOfRide.rideTime,
+          },
+          Object
+        );
+      } else {
+        const ranges = get(result, [resYear, '_ranges']);
+        if (ranges && typeof ranges === 'object') {
+          ranges.end = timeAndDateOfRide.rideTime;
+        }
+      }
+
+      // add to orders list
+      if (!get(result, [resYear, 'orders'])) {
+        setWith(result, [resYear, 'orders'], [], Object);
+      }
+
+      const orderDetail = {
+        id: order.orderCode,
+        date: timeAndDateOfRide.rideTime,
+        price: totalPrice,
+        vendor: vendorTitle,
+        address: orderAddress.address,
+        destination: {
+          latitude: vendorLatitude,
+          longitude: vendorLongitude,
+        },
+        origin: {
+          latitude: orderAddress.latitude,
+          longitude: orderAddress.longitude,
+        },
+        type: newTypeTitle || superTypeAlias,
+        products: order.products.map(p => p.title).join(', '),
+      };
+
+      const orders = get(result, [resYear, 'orders']);
+      if (orders && Array.isArray(orders)) {
+        orders.push(orderDetail);
+      }
+    }
+  }
+
+  return result;
 };

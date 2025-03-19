@@ -27,6 +27,11 @@
   width: 2rem;
 }
 
+[data-type="snappfood"] .chevron {
+  border-bottom: 3px solid #fe02a6;
+  border-right: 3px solid #fe02a6;
+}
+
 .wrapper span:nth-child(2) {
   animation-delay: -0.2s;
 }

@@ -70,3 +70,34 @@ export const getTimeAndDateOfRide = (
     }
   );
 };
+
+export const getTimeAndDateForSnappfood = (dateString: string): RideTimeDate => {
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' as const };
+  const persianDate = date.toLocaleString ('fa-IR', options).split(' ');
+  
+  return {
+    hour: date.getHours(),
+    day: persianDate[0],
+    month: persianDate[1],
+    year: persianDate[2],
+    rideTime: persianDate.join(' '),
+  };
+};
+
+export const getWeekDayForSnappfood = (dateString: string): string => {
+  if (dateString.includes('سه')) {
+    return 'سه‌شنبه';
+  }
+  return dateString.split(' ')[0];
+};
+
+export const getDayForSnappfood = (dateString: string): string => {
+  return dateString.split(' ').at(-2) || '';
+};
+
+export const getMonthForSnappfood = (dateString: string): string => {
+  return dateString.split(' ').at(-1) || '';
+};
+
+

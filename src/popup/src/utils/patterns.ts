@@ -10,23 +10,28 @@ export const week_pattern = [
   'جمعه',
 ];
 
-const MONTHS = {
-  فروردین: 'Farvardin',
-  اردیبهشت: 'Ordibehesht',
-  خرداد: 'Khordad',
-  تیر: 'Tir',
-  مرداد: 'Mordad',
-  شهریور: 'Shahrivar',
-  مهر: 'Mehr',
-  آبان: 'Aban',
-  آذر: 'Azar',
-  دی: 'Dey',
-  بهمن: 'Bahman',
-  اسفند: 'Esfand',
-};
+export const day_pattern = [
+  '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹', '۱۰',
+  '۱۱', '۱۲', '۱۳', '۱۴', '۱۵', '۱۶', '۱۷', '۱۸', '۱۹', '۲۰',
+  '۲۱', '۲۲', '۲۳', '۲۴', '۲۵', '۲۶', '۲۷', '۲۸', '۲۹', '۳۰', '۳۱'
+];
+
+// Persian month names in order
+export const month_pattern = [
+  'فروردین',
+  'اردیبهشت',
+  'خرداد',
+  'تیر',
+  'مرداد',
+  'شهریور',
+  'مهر',
+  'آبان',
+  'آذر',
+  'دی',
+  'بهمن',
+  'اسفند',
+];
 
 export const data_pattern = ['total'];
 
 export const summary_pattern: SummaryKeys[] = ['count', 'prices'];
-
-export const month_pattern = Object.keys(MONTHS);
