@@ -312,6 +312,19 @@ const SnappExtension = () => {
     });
   };
 
+  const handleClearData = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    chrome.storage.local.clear(() => {
+      setDataInStorage(null);
+      setCurrentData(null);
+      setError(null);
+      setIsFetching(true);
+      setIsLoading(false);
+      setPage(0);
+      setIsSnappfoodLoading(false);
+      setSnappfoodPage(0);
+    });
+  };
 
   if (isLoading) {
     return <CarAnimation isFetching={isFetching} speed={page} />;
@@ -344,6 +357,14 @@ const SnappExtension = () => {
                 type="button"
               >
                 {constants.getSnappfoodOrders}
+              </button>
+
+              <button
+                className={styles.clearButton}
+                onClick={handleClearData}
+                type="button"
+              >
+                حذف همه داده ها
               </button>
             </div>
             <span className={styles.lastRideDate}>
