@@ -33,7 +33,6 @@ const SnappExtension = () => {
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
   const [page, setPage] = useState<number>(0);
   const [isSnappfoodLoading, setIsSnappfoodLoading] = useState<boolean>(false);
   const [snappfoodPage, setSnappfoodPage] = useState<number>(0);
@@ -44,13 +43,10 @@ const SnappExtension = () => {
 
   const pendingTimer = useRef<NodeJS.Timeout>();
   
-  // set Snapp access token and mapbox token
+  // set Snapp access token
   useEffect(() => {
     chrome.storage.local.get('accessToken', ({ accessToken }) => {
       setAccessToken(accessToken);
-    });
-    chrome.storage.local.get('mapboxToken', ({ mapboxToken }) => {
-      setMapboxToken(mapboxToken || '');
     });
 
     // clean-up
@@ -100,7 +96,6 @@ const SnappExtension = () => {
         <Suspense fallback={<div>Loading...</div>}>
           <ResultComponent
             data={currentData}
-            mapboxToken={mapboxToken}
             dataType={resultDataType}
           />
         </Suspense>
@@ -310,17 +305,13 @@ const SnappExtension = () => {
     });
   };
 
-  const handleChangeMapboxToken = (e: ChangeEvent<HTMLInputElement>) => {
-    setMapboxToken(e.target.value);
-    chrome.storage.local.set({ mapboxToken: e.target.value });
-  };
 
   if (isLoading) {
     return <CarAnimation isFetching={isFetching} speed={page} />;
   }
 
   if (isSnappfoodLoading) {
-    return <CarAnimation isFetching={false} speed={snappfoodPage} />;
+    return <CarAnimation isFetching={isFetching} speed={snappfoodPage} />;
   }
 
   const lastRideEndRange = get(dataInStorage, 'rides.total._ranges.end', '');
@@ -330,31 +321,6 @@ const SnappExtension = () => {
       <div className={styles.actions}>
         {accessToken && !error ? (
           <>
-            <span className={styles.hint}>{constants.mapboxHint}</span>
-            <Input
-              autoComplete="off"
-              icon="token"
-              id="mapbox"
-              onChange={handleChangeMapboxToken}
-              placeholder={constants.mapboxTokenPlaceholder}
-              type="text"
-              value={mapboxToken}
-            />
-            {mapboxToken ? (
-              <button
-                className={styles.mapboxButton}
-                disabled={true}
-                type="button"
-              >
-                {constants.mapboxTokenHasSet}
-              </button>
-            ) : (
-              <Link url="mapboxToken">
-                <button className={styles.mapboxButton} type="button">
-                  {constants.getMapboxToken}
-                </button>
-              </Link>
-            )}
             <div className={styles.buttonsContainer}>
               <button
                 className={styles.snappButton}
@@ -374,7 +340,7 @@ const SnappExtension = () => {
               </button>
             </div>
             <span className={styles.lastRideDate}>
-              {lastRideEndRange && getLastRideDateMessage(lastRideEndRange)}
+              {lastRideEndRange && getLastRideDateMessage(lastRideEndRange, resultDataType)}
             </span>
           </>
         ) : (

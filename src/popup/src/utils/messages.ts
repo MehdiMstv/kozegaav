@@ -177,6 +177,6 @@ export const getErrorMessage: { [statusCode: string]: string } = {
   401: 'خیلی وقته بهم سر نزدی! باید دوباره وارد حساب اسنپت بشی.',
 };
 
-export const getLastRideDateMessage = (lastEndRange: string) => {
-  return `تاریخ آخرین سفر: ${lastEndRange}`;
+export const getLastRideDateMessage = (lastEndRange: string, dataType: DataSource = 'snapp') => {
+  return `تاریخ آخرین ${dataType === 'snapp' ? 'سفر' : 'سفارش'}: ${lastEndRange}`;
 };

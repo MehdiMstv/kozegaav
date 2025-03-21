@@ -30,11 +30,6 @@
   justify-content: center;
 }
 
-.mapboxButton {
-  background-color: #4264fb;
-  margin-top: 1rem;
-}
-
 .snappButton {
   background-color: #02d181;
   border-radius: 8px;

@@ -24,11 +24,10 @@ import styles from './Result.module.css';
 
 interface Props {
   data: SnappTaxiDataStorage | SnappfoodDataStorage;
-  mapboxToken?: string;
   dataType?: DataSource;
 }
 
-const Result = ({ data, mapboxToken, dataType = 'snapp' }: Props) => {
+const Result = ({ data,  dataType = 'snapp' }: Props) => {
   // Extract the data based on type
   const displayData = dataType === 'snapp' 
     ? (data as SnappTaxiDataStorage).rides 
