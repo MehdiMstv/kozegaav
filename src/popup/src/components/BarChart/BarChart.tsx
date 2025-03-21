@@ -74,7 +74,7 @@ const BarChart = ({ color, data, type, dataType = 'snapp' }: Props) => {
             const { count, price } = data;
             const value = data[type];
             return (
-              <span>
+              <span className={styles.tooltip}>
                 {getTooltipMessage(
                   count,
                   price as number,

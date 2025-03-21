@@ -5,6 +5,7 @@ import type { SVGProps } from 'types/SVGProps';
 
 import Calendar from './Calendar';
 import Car from './Car';
+import Delivery from './Delivery';
 import Download from './Download';
 import Money from './Money';
 import Star from './Star';
@@ -25,6 +26,7 @@ const getIcon: { [icon in IconNames]: FC<SVGProps> } = {
   calendar: Calendar,
   car: Car,
   download: Download,
+  delivery: Delivery,
   money: Money,
   star: Star,
   token: Token,

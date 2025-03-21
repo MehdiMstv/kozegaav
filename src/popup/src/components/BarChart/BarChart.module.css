@@ -6,3 +6,25 @@
 .barBody {
   height: 100%;
 }
+
+.barChart {
+  height: 300px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.tooltip {
+  background-color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}

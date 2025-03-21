@@ -9,7 +9,8 @@ export type BarChartTypes =
   | '_cars'
   | '_years'
   | '_rates'
-  | '_types';
+  | '_types'
+  | '_restaurants';
 
 export type BarChartsObject = {
   [K in BarChartTypes]?: CountPriceObject;
