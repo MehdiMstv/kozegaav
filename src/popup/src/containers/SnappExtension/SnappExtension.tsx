@@ -3,7 +3,6 @@ import {
   useEffect,
   useRef,
   MouseEvent,
-  ChangeEvent,
   lazy,
   Suspense,
 } from 'react';
@@ -21,7 +20,6 @@ import { convertToLastVersion, getLastVersionNumber } from 'manipulate/convert';
 
 import CarAnimation from 'components/CarAnimation';
 import Footer from 'components/Footer';
-import Input from 'components/Input';
 import Link from 'components/Link';
 import styles from './SnappExtension.module.css';
 
@@ -222,7 +220,7 @@ const SnappExtension = () => {
     const data = {
       orders: snappfoodData,
       meta: {
-        lastRideId: orders.length > 0 ? orders[0].orderCode : '',
+        lastOrderId: orders.length > 0 ? orders[0].orderCode : '',
         version: getLastVersionNumber(),
         forceUpdate: false,
         dataType: 'snappfood' as const
@@ -275,7 +273,7 @@ const SnappExtension = () => {
               // fetch new rides history based on last ride id
               const ridesHistory = await getNewRides(
                 lastRidesPage,
-                meta.lastRideId
+                meta.lastRideId!
               );
               const newRides = getReport(ridesHistory);
               const rides = mergeReports(newRides, (dataInStorage as SnappTaxiDataStorage).rides);

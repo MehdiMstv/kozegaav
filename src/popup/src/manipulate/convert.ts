@@ -1,11 +1,16 @@
-import { RidesData } from 'types/Rides';
+import { OrdersData, RidesData } from 'types/Rides';
 import {
-  DataStorage,
   VersionObject,
   VersionsKeys,
   DATA_VERSIONS,
   MetaData,
 } from 'types/Storage';
+
+interface DataStorage {
+  rides?: RidesData;
+  orders?: OrdersData;
+  meta: MetaData;
+}
 
 const convertFunctions: {
   [version in VersionsKeys]: VersionObject;
@@ -22,7 +27,7 @@ export const convertToLastVersion = (data: DataStorage) => {
   // get available versions
   const versions = Object.keys(convertFunctions);
 
-  const newRides = versions.reduce(
+  const newData = versions.reduce(
     (tmp: DataStorage, version, index) => {
       const { forceUpdate } = convertFunctions[version];
 
@@ -30,11 +35,14 @@ export const convertToLastVersion = (data: DataStorage) => {
         version,
         forceUpdate,
         lastRideId: data?.meta?.lastRideId || '',
+        lastOrderId: data?.meta?.lastOrderId || '',
+        dataType: data?.meta?.dataType || 'snapp',
       };
 
       // init version
       if (!hasVersion) {
         tmp.rides = data as unknown as RidesData;
+        tmp.orders = data as unknown as OrdersData;
         tmp.meta = meta;
         return tmp;
       }
@@ -42,6 +50,7 @@ export const convertToLastVersion = (data: DataStorage) => {
       // apply new version changes
       if (Number(data.meta.version) < Number(version)) {
         tmp.rides = { ...tmp.rides };
+        tmp.orders = { ...tmp.orders };
         tmp.meta = meta;
         return tmp;
       }
@@ -60,8 +69,9 @@ export const convertToLastVersion = (data: DataStorage) => {
     },
     {
       rides: {},
-      meta: { version: '1', lastRideId: '', forceUpdate: false },
+      orders: {},
+      meta: { version: '1', lastRideId: '', lastOrderId: '', forceUpdate: false },
     }
   );
-  return newRides;
+  return newData;
 };

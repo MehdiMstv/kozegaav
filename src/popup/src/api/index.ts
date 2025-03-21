@@ -36,7 +36,7 @@ export const fetchSingleRidePage = async (
 
 export const fetchSnappfoodOrderPage = async (
   page: number,
-  size = 215
+  size = 100
 ): Promise<SnappfoodOrderResponse> => {
   const url = `https://snappfood.ir/mobile/v1/order/reorder?page=${page}&size=${size}`;
   
