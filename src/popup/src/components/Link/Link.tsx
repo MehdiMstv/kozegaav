@@ -6,9 +6,8 @@ interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
 }
 
 const getURL = {
-  github: 'https://github.com/sepehrity/my-snapp-extension',
-  mapboxToken: 'https://account.mapbox.com/access-tokens',
-  sepehrity: 'https://twitter.com/sepehrity',
+  github: 'https://github.com/MehdiMstv/kozegaav-extension',
+  sepehrity: 'https://x.com/MehdiMstv',
   snappHome: 'https://snapp.ir',
   snappPWA: 'https://app.snapp.taxi',
 } as const;
