@@ -73,7 +73,7 @@ export const getTimeAndDateOfRide = (
 
 export const getTimeAndDateForSnappfood = (dateString: string): RideTimeDate => {
   const date = new Date(dateString);
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' as const };
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' as const };
   const persianDate = date.toLocaleString ('fa-IR', options).split(' ');
   
   return {

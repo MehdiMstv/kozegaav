@@ -3,7 +3,6 @@ import {
   useEffect,
   useRef,
   MouseEvent,
-  ChangeEvent,
   lazy,
   Suspense,
 } from 'react';
@@ -14,14 +13,13 @@ import type { RideHistoryResponse } from 'types/RideHistoryResponse';
 import type { SnappfoodOrder } from 'types/SnappfoodOrderResponse';
 
 import { getReport, mergeReports, getSnappfoodReport } from 'manipulate';
-import { getErrorMessage, getLastRideDateMessage } from 'utils/messages';
+import { getErrorMessage, getLastRideDateMessage, getLastOrderDateMessage } from 'utils/messages';
 import { fetchSingleRidePage, fetchSnappfoodOrderPage } from 'api';
 import constants from 'utils/constants';
 import { convertToLastVersion, getLastVersionNumber } from 'manipulate/convert';
 
 import CarAnimation from 'components/CarAnimation';
 import Footer from 'components/Footer';
-import Input from 'components/Input';
 import Link from 'components/Link';
 import styles from './SnappExtension.module.css';
 
@@ -29,7 +27,8 @@ const ResultComponent = lazy(() => import('containers/Result'));
 
 const SnappExtension = () => {
   const [accessToken, setAccessToken] = useState<string>('');
-  const [dataInStorage, setDataInStorage] = useState<SnappTaxiDataStorage | SnappfoodDataStorage | null>(null);
+  const [rideData, setRideData] = useState<SnappTaxiDataStorage | null>(null);
+  const [foodData, setFoodData] = useState<SnappfoodDataStorage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -60,7 +59,8 @@ const SnappExtension = () => {
   // Set data based on active tab
   useEffect(() => {
     chrome.storage.local.get(['rideResult', 'foodResult'], (result) => {
-      setDataInStorage(activeTab === 'snapp' ? result.rideResult : result.foodResult);
+      setRideData(result.rideResult);
+      setFoodData(result.foodResult);
     });
   }, [activeTab]);
 
@@ -222,7 +222,7 @@ const SnappExtension = () => {
     const data = {
       orders: snappfoodData,
       meta: {
-        lastRideId: orders.length > 0 ? orders[0].orderCode : '',
+        lastOrderId: orders.length > 0 ? orders[0].orderCode : '',
         version: getLastVersionNumber(),
         forceUpdate: false,
         dataType: 'snappfood' as const
@@ -256,8 +256,8 @@ const SnappExtension = () => {
     if (e.target instanceof HTMLElement) {
       const accessToken = e.target.dataset.accessToken as string;
 
-      if (dataInStorage && 'rides' in dataInStorage) {
-        const { meta, rides } = convertToLastVersion(dataInStorage as SnappTaxiDataStorage);
+      if (rideData && 'rides' in rideData) {
+        const { meta, rides } = convertToLastVersion(rideData as SnappTaxiDataStorage);
         if (meta.forceUpdate) {
           prepareRidesData(accessToken);
         } else {
@@ -275,10 +275,10 @@ const SnappExtension = () => {
               // fetch new rides history based on last ride id
               const ridesHistory = await getNewRides(
                 lastRidesPage,
-                meta.lastRideId
+                meta.lastRideId!
               );
               const newRides = getReport(ridesHistory);
-              const rides = mergeReports(newRides, (dataInStorage as SnappTaxiDataStorage).rides);
+              const rides = mergeReports(newRides, (rideData as SnappTaxiDataStorage).rides);
 
               handleShowResult({ rides, meta: { ...meta, lastRideId } } as SnappTaxiDataStorage, false);
             }
@@ -314,6 +314,20 @@ const SnappExtension = () => {
     });
   };
 
+  const handleClearData = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    chrome.storage.local.clear(() => {
+      setRideData(null);
+      setFoodData(null);
+      setCurrentData(null);
+      setError(null);
+      setIsFetching(true);
+      setIsLoading(false);
+      setPage(0);
+      setIsSnappfoodLoading(false);
+      setSnappfoodPage(0);
+    });
+  };
 
   if (isLoading) {
     return <CarAnimation isFetching={isFetching} speed={page} />;
@@ -323,7 +337,8 @@ const SnappExtension = () => {
     return <CarAnimation isFetching={isFetching} speed={snappfoodPage} />;
   }
 
-  const lastRideEndRange = get(dataInStorage, 'rides.total._ranges.end', '');
+  const lastRideEndRange = get(rideData, 'rides.total._ranges.end', '');
+  const lastOrderEndRange = get(foodData, 'orders.total._ranges.end', '');
 
   return (
     <main className={styles.extension}>
@@ -339,7 +354,10 @@ const SnappExtension = () => {
               >
                 {constants.getSnappRides}
               </button>
-              
+              <span className={styles.lastRideDate}>
+                {lastRideEndRange && getLastRideDateMessage(lastRideEndRange)}
+              </span>
+
               <button
                 className={styles.snappfoodButton}
                 onClick={handleGetSnappfoodOrders}
@@ -347,10 +365,18 @@ const SnappExtension = () => {
               >
                 {constants.getSnappfoodOrders}
               </button>
+              <span className={styles.lastRideDate}>
+                {lastOrderEndRange && getLastOrderDateMessage(lastOrderEndRange)}
+              </span>
+
+              <button
+                className={styles.clearButton}
+                onClick={handleClearData}
+                type="button"
+              >
+                حذف همه داده ها
+              </button>
             </div>
-            <span className={styles.lastRideDate}>
-              {lastRideEndRange && getLastRideDateMessage(lastRideEndRange, resultDataType)}
-            </span>
           </>
         ) : (
           <>

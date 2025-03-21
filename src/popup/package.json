@@ -7,6 +7,7 @@
     "@nivo/bar": "^0.80.0",
     "@nivo/core": "^0.80.0",
     "dom-to-image": "^2.6.0",
+    "html2canvas": "^1.4.1",
     "lodash.get": "^4.4.2",
     "lodash.mergewith": "^4.6.2",
     "lodash.set": "^4.3.2",

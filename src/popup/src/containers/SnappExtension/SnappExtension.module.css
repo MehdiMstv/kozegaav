@@ -67,3 +67,19 @@
   font-size: 0.9rem;
   min-height: 1.375rem;
 }
+
+.clearButton {
+  background-color: #dc3545;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+  padding: 8px 16px;
+  transition: background-color 0.2s;
+}
+
+.clearButton:hover {
+  background-color: #c82333;
+}

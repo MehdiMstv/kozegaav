@@ -12,7 +12,7 @@ export type VersionObject = {
 export type DataSource = 'snapp' | 'snappfood';
 
 export type MetaData = {
-  lastRideId: string;
+  lastRideId?: string;
   lastOrderId?: string;
   version: VersionsKeys;
   dataType?: DataSource;
