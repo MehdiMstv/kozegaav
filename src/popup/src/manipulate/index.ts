@@ -21,10 +21,10 @@ import {
   getWeekDay,
   isCanceledRide,
   getTimeAndDateForSnappfood,
-  getWeekDayForSnappfood, getDayForSnappfood, getMonthForSnappfood
+  getWeekDayForSnappfood,
 } from './helpers';
 
-type CountPriceKeys = keyof PickByValue<Required<Rides>, CountPriceObject>;
+type CountPriceKeys = keyof (PickByValue<Required<Rides>, CountPriceObject> & PickByValue<Required<Orders>, CountPriceObject>);
 
 const countPriceKeys: CountPriceKeys[] = [
   '_cars',
@@ -35,6 +35,7 @@ const countPriceKeys: CountPriceKeys[] = [
   '_types',
   '_weeks',
   '_years',
+  '_restaurants',
 ];
 
 const mergeSumAndCount = (
@@ -338,7 +339,7 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
     const year = persianDate[0];
     const weekDay = persianDate[2].replace(',', '');
     const hour = date.getHours();
-    const timeAndDateOfRide = getTimeAndDateForSnappfood(startedAtObject.date);
+    const timeAndDateOfOrder = getTimeAndDateForSnappfood(startedAtObject.date);
     const week = getWeekDayForSnappfood(persianDate[3]);
     const month = persianDate[1];
 
@@ -442,20 +443,6 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
         }
       }
 
-      // add rate to overall
-      if (!get(result, [resYear, '_rates'])) {
-        setWith(
-          result,
-          [resYear, '_rates'],
-          {
-            count: 0,
-            rated_count: 0,
-            rates: 0,
-          },
-          Object
-        );
-      }
-
 
       // add to ranges
       if (!get(result, [resYear, '_ranges'])) {
@@ -463,15 +450,15 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
           result,
           [resYear, '_ranges'],
           {
-            start: timeAndDateOfRide.rideTime,
-            end: timeAndDateOfRide.rideTime,
+            start: timeAndDateOfOrder.rideTime,
+            end: timeAndDateOfOrder.rideTime,
           },
           Object
         );
       } else {
         const ranges = get(result, [resYear, '_ranges']);
         if (ranges && typeof ranges === 'object') {
-          ranges.end = timeAndDateOfRide.rideTime;
+          ranges.start = timeAndDateOfOrder.rideTime;
         }
       }
 
@@ -482,7 +469,7 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
 
       const orderDetail = {
         id: order.orderCode,
-        date: timeAndDateOfRide.rideTime,
+        date: timeAndDateOfOrder.rideTime,
         price: totalPrice,
         vendor: vendorTitle,
         address: orderAddress.address,

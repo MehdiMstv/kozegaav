@@ -60,6 +60,7 @@ const getTypeFormat: {
       return formatCarName(value, dataType);
     },
   },
+  _restaurants: { format: (value) => value },
 };
 
 const getFormattedSummary: {
@@ -153,6 +154,7 @@ export const mapToPersian: { [type in BarChartTypes]: string } = {
   _cars: 'مدل ماشین',
   _rates: 'امتیاز سفر',
   _types: 'نوع سرویس',
+  _restaurants: 'رستوران',
 };
 
 export const getMapToPersian = (type: BarChartTypes, dataType: DataSource = 'snapp'): string => {
@@ -171,12 +173,17 @@ export const getExportName: { [type in BarChartTypes]: string } = {
   _cars: 'Cars',
   _rates: 'Rates',
   _types: 'ServiceTypes',
+  _restaurants: 'Restaurants',
 };
 
 export const getErrorMessage: { [statusCode: string]: string } = {
   401: 'خیلی وقته بهم سر نزدی! باید دوباره وارد حساب اسنپت بشی.',
 };
 
-export const getLastRideDateMessage = (lastEndRange: string, dataType: DataSource = 'snapp') => {
-  return `تاریخ آخرین ${dataType === 'snapp' ? 'سفر' : 'سفارش'}: ${lastEndRange}`;
+export const getLastRideDateMessage = (lastEndRange: string) => {
+  return `تاریخ آخرین سفر: ${lastEndRange}`;
+};
+
+export const getLastOrderDateMessage = (lastEndRange: string) => {
+  return `تاریخ آخرین سفارش: ${lastEndRange}`;
 };
