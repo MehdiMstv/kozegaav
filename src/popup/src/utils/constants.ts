@@ -1,5 +1,5 @@
 export default {
-  creator: 'sepehrity@',
+  creator: 'MehdiMstv@',
   download: 'دانلود',
   getAnalytics: 'بزن بریم',
   github: 'GitHub',

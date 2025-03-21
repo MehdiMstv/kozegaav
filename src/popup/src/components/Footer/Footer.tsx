@@ -12,7 +12,7 @@ const Footer = () => {
       <Link className={styles.link} url="github">
         {constants.github}
       </Link>
-      <Link className={styles.link} url="sepehrity">
+      <Link className={styles.link} url="MehdiMstv">
         {constants.creator}
       </Link>
     </div>

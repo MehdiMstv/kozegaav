@@ -7,7 +7,7 @@ interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
 
 const getURL = {
   github: 'https://github.com/MehdiMstv/kozegaav-extension',
-  sepehrity: 'https://x.com/MehdiMstv',
+  MehdiMstv: 'https://x.com/MehdiMstv',
   snappHome: 'https://snapp.ir',
   snappPWA: 'https://app.snapp.taxi',
 } as const;

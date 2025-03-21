@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "My Snapp",
-  "short_name": "My Snapp",
-  "version": "3.3.1",
-  "description": "Analyze your Snapp rides",
+  "name": "KozeGaav",
+  "short_name": "KozeGaav",
+  "version": "1.0.0",
+  "description": "Analyze your Snapp rides and snappfood orders",
   "permissions": ["tabs", "storage"],
   "action": {
     "default_popup": "popup/index.html",
-    "default_title": "My Snapp",
+    "default_title": "KozeGaav",
     "default_icon": "assets/icon.png"
   },
   "content_scripts": [
