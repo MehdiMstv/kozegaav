@@ -1,5 +1,5 @@
 {
-  "name": "snapp-analyzer-extension",
+  "name": "kozegaav-extension",
   "version": "1.0.0",
   "lintOnSave": true,
   "description": "Analyze your Snapp rides and Snappfood orders",
@@ -14,7 +14,7 @@
     "start": "npm-run-all --parallel start:*",
     "prebuild": "npm run clean",
     "prestart": "npm run clean",
-    "tada": "bestzip kozegaav-extension.zip dist/*"
+    "tada": "bestzip kozegaav-extension-$npm_package_version.zip dist/*"
   },
   "keywords": [],
   "license": "GPL-3.0+",
