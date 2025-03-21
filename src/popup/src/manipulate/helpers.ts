@@ -86,10 +86,22 @@ export const getTimeAndDateForSnappfood = (dateString: string): RideTimeDate => 
 };
 
 export const getWeekDayForSnappfood = (dateString: string): string => {
-  if (dateString.includes('سه')) {
-    return 'سه‌شنبه';
+  const weekDayMap: { [key: string]: string } = {
+    'یک': 'یک‌شنبه',
+    'دو': 'دوشنبه',
+    'سه': 'سه‌شنبه',
+    'چهار': 'چهارشنبه',
+    'پنج': 'پنج‌شنبه',
+    'جمعه': 'جمعه',
+  };
+
+  for (const [key, value] of Object.entries(weekDayMap)) {
+    if (dateString.includes(key)) {
+      console.log(value)
+      return value;
+    }
   }
-  return dateString.split(' ')[0];
+  return "شنبه";
 };
 
 export const getDayForSnappfood = (dateString: string): string => {

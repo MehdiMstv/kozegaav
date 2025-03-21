@@ -65,7 +65,9 @@ const Charts = ({
     if (_hours) charts._hours = _hours;
     if (_days) charts._days = getSortedPattern(_days, day_pattern);
     
+    console.log(_weeks)
     if (_weeks) charts._weeks = getSortedPattern(_weeks, week_pattern);
+    console.log(charts._weeks)
     if (transformedMonths) charts._months = getSortedPattern(transformedMonths, month_pattern);
     if (_years) charts._years = _years;
     
@@ -84,7 +86,7 @@ const Charts = ({
         return (
           <BarChart
             key={type}
-            color={colors[index]}
+            color={dataType === 'snapp' ? colors[index] : colors[index + 1]}
             type={type as BarChartTypes}
             data={(Object.keys(chart_data) as string[]).map((key: string) => {
               const { count, price } = chart_data[key];
@@ -99,7 +101,7 @@ const Charts = ({
         );
       })}
       {CarCharts.map((chart_data, index) => {
-        const type: BarChartTypes = '_cars';
+        const type: BarChartTypes = dataType === 'snapp' ? '_cars' : '_restaurants';
         return (
           <BarChart
             key={`${type}_${index}`}

@@ -339,7 +339,7 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
     const weekDay = persianDate[2].replace(',', '');
     const hour = date.getHours();
     const timeAndDateOfRide = getTimeAndDateForSnappfood(startedAtObject.date);
-    const week = persianDate[3];
+    const week = getWeekDayForSnappfood(persianDate[3]);
     const month = persianDate[1];
 
     if (!result[year]) {
