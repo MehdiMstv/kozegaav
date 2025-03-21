@@ -78,7 +78,7 @@ const fetchSnappfoodOrders = async (url: string): Promise<any> => {
 };
 
 // Listen for messages from content scripts or popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
   if (message.action === 'fetchSnappfoodOrders') {
     fetchSnappfoodOrders(message.url)
       .then(data => {
