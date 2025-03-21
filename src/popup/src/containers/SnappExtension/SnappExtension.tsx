@@ -232,9 +232,8 @@ const SnappExtension = () => {
     chrome.storage.local.set({ foodResult: data }, () => {
       pendingTimer.current = setTimeout(() => {
         setIsSnappfoodLoading(false);
-        chrome.tabs.create({
-          url: chrome.runtime.getURL('popup/index.html?type=snappfood#result'),
-        });
+        setIsFetching(false);
+        handleShowResult(data, true);
       }, 3000);
     });
   };
@@ -244,8 +243,33 @@ const SnappExtension = () => {
     setActiveTab('snappfood');
     setResultDataType('snappfood');
     setIsSnappfoodLoading(true);
-    setIsFetching(false);
-    await prepareSnappfoodData();
+    setIsFetching(true);
+
+    if (foodData && 'orders' in foodData) {
+      const { meta, orders } = convertToLastVersion(foodData as SnappfoodDataStorage);
+      if (meta.forceUpdate) {
+        await prepareSnappfoodData();
+      } else {
+        // Get first page to check last order
+        setSnappfoodPage(0);
+        const firstPageResponse = await getSnappfoodOrderPage(0);
+        if (firstPageResponse && firstPageResponse.data.orders.length > 0) {
+          const lastOrderId = firstPageResponse.data.orders[0].orderCode;
+          const isUpdated = lastOrderId === meta.lastOrderId;
+
+          if (isUpdated) {
+            // No new orders, use existing data
+            handleShowResult({ orders, meta } as SnappfoodDataStorage, false);
+          } else {
+            // Fetch all new data since there are new orders
+            await prepareSnappfoodData();
+          }
+        }
+      }
+    } else {
+      // No existing data, fetch everything
+      await prepareSnappfoodData();
+    }
   };
 
   const handleGetRidesHistory = async (e: MouseEvent<HTMLButtonElement>) => {
@@ -298,19 +322,19 @@ const SnappExtension = () => {
         pendingTimer.current = setTimeout(() => {
           setIsLoading(false);
           setIsSnappfoodLoading(false);
-          handleOpenNewTab();
+          handleOpenNewTab(data.meta.dataType);
         }, 3000);
       } else {
         setIsLoading(false);
         setIsSnappfoodLoading(false);
-        handleOpenNewTab();
+        handleOpenNewTab(data.meta.dataType);
       }
     });
   };
 
-  const handleOpenNewTab = () => {
+  const handleOpenNewTab = (dataType: DataSource = 'snapp') => {
     chrome.tabs.create({
-      url: chrome.runtime.getURL(`popup/index.html?type=${activeTab}#result`),
+      url: chrome.runtime.getURL(`popup/index.html?type=${dataType}#result`),
     });
   };
 

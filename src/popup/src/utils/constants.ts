@@ -18,6 +18,7 @@ export default {
   tweet: 'توییت',
   twitter: 'به اشتراک‌گذاری در توییتر',
   waitToComplete: 'تا رسیدن به مقصد منتظر بمون...',
+  waitToDeliver: 'تا ارسال منتظر بمون...',
   weArrived: 'رسیدیم...',
   getSnappRides: 'دریافت سفرهای اسنپ',
   getSnappfoodOrders: 'دریافت سفارشات اسنپ‌فود',
