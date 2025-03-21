@@ -77,31 +77,31 @@ const SnappExtension = () => {
       const dataTypeParam = urlParams.get('type') || 'snapp';
       const dataType = dataTypeParam === 'snappfood' ? 'snappfood' as const : 'snapp' as const;
       setResultDataType(dataType);
+      setActiveTab(dataType);
       
-      // Get both data types
+      // Get data from storage
       chrome.storage.local.get(['rideResult', 'foodResult'], (result) => {
-        const rideData = result.rideResult;
-        const foodData = result.foodResult;
-        const data = dataType === 'snappfood' ? foodData : rideData;
-        console.log("Loading data:", data);
-        setCurrentData(data);
+        const data = dataType === 'snappfood' ? result.foodResult : result.rideResult;
+        if (data) {
+          setCurrentData(data);
+        }
       });
     }
   }, [isResultPage]);
 
   // Render the result page if we're on the result route
   if (isResultPage) {
-    if (currentData) {
-      return (
-        <Suspense fallback={<div>Loading...</div>}>
-          <ResultComponent
-            data={currentData}
-            dataType={resultDataType}
-          />
-        </Suspense>
-      );
+    if (!currentData) {
+      return <div className={styles.loadData}>{constants.loadData}</div>;
     }
-    return <div className={styles.loadData}>{constants.loadData}</div>;
+    return (
+      <Suspense fallback={<div className={styles.loadData}>{constants.loadData}</div>}>
+        <ResultComponent
+          data={currentData}
+          dataType={resultDataType}
+        />
+      </Suspense>
+    );
   }
 
   const getSingleRidePage = async (accessToken: string, page: number) => {
@@ -216,29 +216,36 @@ const SnappExtension = () => {
 
   // process Snappfood data
   const prepareSnappfoodData = async () => {
-    setIsSnappfoodLoading(true);
     const orders = await getAllSnappfoodOrders();
     const snappfoodData = getSnappfoodReport(orders);
     
-    handleShowResult(
-      {
-        orders: snappfoodData,
-        meta: {
-          lastRideId: orders.length > 0 ? orders[0].orderCode : '',
-          version: getLastVersionNumber(),
-          forceUpdate: false,
-          dataType: 'snappfood'
-        },
-      } as SnappfoodDataStorage,
-      true
-    );
-    setIsSnappfoodLoading(false);
+    const data = {
+      orders: snappfoodData,
+      meta: {
+        lastRideId: orders.length > 0 ? orders[0].orderCode : '',
+        version: getLastVersionNumber(),
+        forceUpdate: false,
+        dataType: 'snappfood' as const
+      },
+    } as SnappfoodDataStorage;
+
+    chrome.storage.local.set({ foodResult: data }, () => {
+      pendingTimer.current = setTimeout(() => {
+        setIsSnappfoodLoading(false);
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('popup/index.html?type=snappfood#result'),
+        });
+      }, 3000);
+    });
   };
 
   const handleGetSnappfoodOrders = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setActiveTab('snappfood');
-    prepareSnappfoodData();
+    setResultDataType('snappfood');
+    setIsSnappfoodLoading(true);
+    setIsFetching(false);
+    await prepareSnappfoodData();
   };
 
   const handleGetRidesHistory = async (e: MouseEvent<HTMLButtonElement>) => {
@@ -294,6 +301,8 @@ const SnappExtension = () => {
           handleOpenNewTab();
         }, 3000);
       } else {
+        setIsLoading(false);
+        setIsSnappfoodLoading(false);
         handleOpenNewTab();
       }
     });
