@@ -26,6 +26,7 @@ const Charts = ({ data, dataType = 'snapp' }: Props) => {
   const { _types, _hours, _days, _weeks, _months, _years } = data as CommonData;
   const _rates = dataType === 'snapp' ? (data as Rides)._rates : undefined;
   const _cars = dataType === 'snapp' ? (data as Rides)._cars : undefined;
+  const _restaurants = dataType === 'snappfood' ? (data as Orders)._restaurants : undefined;
 
   // Transform month numbers to Persian names
   const transformedMonths = useMemo(() => {
@@ -59,6 +60,10 @@ const Charts = ({ data, dataType = 'snapp' }: Props) => {
     () => _cars ? getCarsChunks(getSortedPattern(_cars, [], 'count')) : [],
     [_cars]
   );
+  const restaurantCharts: CountPriceObject[] = useMemo(
+    () => _restaurants ? getCarsChunks(getSortedPattern(_restaurants, [], 'count')) : [],
+    [_restaurants]
+  );
 
   return (
     <>
@@ -76,7 +81,23 @@ const Charts = ({ data, dataType = 'snapp' }: Props) => {
         />
       ))}
       {carCharts.map((chartData, index) => {
-        const type: BarChartTypes = dataType === 'snapp' ? '_cars' : '_restaurants';
+        const type: BarChartTypes = '_cars'
+        return (
+          <BarChart
+            key={`${type}_${index}`}
+            color={carColors[index]}
+            type={type}
+            data={Object.entries(chartData).map(([key, { count, price }]) => ({
+              [type]: key,
+              count,
+              price,
+            }))}
+            dataType={dataType}
+          />
+        );
+      })} 
+      {restaurantCharts.map((chartData, index) => {
+        const type: BarChartTypes = '_restaurants'
         return (
           <BarChart
             key={`${type}_${index}`}
