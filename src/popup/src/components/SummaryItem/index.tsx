@@ -21,6 +21,7 @@ const getIconType = (type: Type, dataType: DataSource): IconNames => {
     case 'count':
       return dataType === 'snappfood' ? 'delivery' : 'car';
     case 'prices':
+    case 'maxPrice':
       return 'money';
     case 'rate':
       return 'star';

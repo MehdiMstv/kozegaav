@@ -34,4 +34,4 @@ export const month_pattern = [
 
 export const data_pattern = ['total'];
 
-export const summary_pattern: SummaryKeys[] = ['count', 'prices'];
+export const summary_pattern = ['count', 'prices', 'distance', 'durations', 'maxPrice'] as const;

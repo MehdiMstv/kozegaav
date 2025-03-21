@@ -1,13 +1,22 @@
-import { memo, useMemo } from 'react';
+import {
+  MouseEvent,
+  ReactText,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
+import { memo } from 'react';
 
 import type { Rides } from 'types/Rides';
 import type { RateObject } from 'types/Summary';
 import type { Props as YearSelectorProps } from 'components/YearSelector';
 import type { DataSource } from 'types/Storage';
 import type { SummaryKeys } from 'types/Summary';
+import type { CountPriceObject } from 'types/Rides';
+import type { CommonSummary } from 'types/Rides';
 
 import {
-  getSummaryItemMessage,
+  getFormattedSummary,
   getRateSummaryMessage,
   getStartAndEndDate,
 } from 'utils/messages';
@@ -22,12 +31,18 @@ import SummaryItem from 'components/SummaryItem';
 import YearSelector from 'components/YearSelector';
 import styles from './Summary.module.css';
 
-interface Props extends YearSelectorProps {
-  rates: Rides['_rates'];
-  ranges: Rides['_ranges'];
-  summary: Rides['_summary'];
+type Props = {
+  active: ReactText;
+  onSelectYear: (event: MouseEvent<HTMLDivElement>) => void;
+  ranges?: {
+    start: string;
+    end: string;
+  };
+  rates: CountPriceObject;
+  summary: CommonSummary;
+  years: string[];
   dataType?: DataSource;
-}
+};
 
 const Summary = ({
   active,
@@ -53,17 +68,7 @@ const Summary = ({
     hashtags: dataType === 'snapp' ? constants.hashtag : constants.snappfood,
   });
 
-  const keys = useMemo(
-    () =>
-      (Object.keys(summary) as Array<'count' | 'prices' | 'distance' | 'durations'>)
-        .filter(key => dataType === 'snappfood' ? key !== 'distance' : true)
-        .sort(
-          (a, b) => summary_pattern.indexOf(a) - summary_pattern.indexOf(b)
-        ),
-    [summary, dataType]
-  );
-
-  const rate = useMemo<RateObject>(() => {
+  const rate = useMemo<{ count: number; sum: number }>(() => {
     return Object.entries(rates).reduce(
       (acc: { count: number; sum: number }, [rate, value]) => {
         if (typeof value === 'object' && 'count' in value) {
@@ -75,6 +80,21 @@ const Summary = ({
       { count: 0, sum: 0 }
     );
   }, [rates]);
+
+  const keys = useMemo(
+    () =>
+      (Object.keys(summary) as Array<'count' | 'prices' | 'distance' | 'durations' | 'maxPrice'>)
+        .filter(key => {
+          if (dataType === 'snappfood') {
+            return key === 'count' || key === 'prices' || key === 'durations' || key === 'maxPrice';
+          }
+          return key !== 'maxPrice';
+        })
+        .sort(
+          (a, b) => summary_pattern.indexOf(a) - summary_pattern.indexOf(b)
+        ),
+    [summary, dataType]
+  );
 
   return (
     <div className={styles.summary} ref={downloadRef}>
@@ -96,16 +116,22 @@ const Summary = ({
           <DownloadButton {...downloadButtonProps} />
           <TweetButton style={buttonStyle} {...tweetButtonProps} />
         </div>
-        {keys.map((key) => {
-          const value = summary[key] !== undefined ? getSummaryItemMessage(summary[key], key as keyof typeof summary, dataType) : { message: '0', unit: '' };
-          return <SummaryItem key={key} type={key as (SummaryKeys | 'durations')} value={value} dataType={dataType} />;
-        })}
-        {dataType === 'snapp' && (
+        {keys.map((key) => (
+          <SummaryItem
+            key={key}
+            type={key}
+            value={getFormattedSummary[key].format(summary[key], dataType)}
+            dataType={dataType}
+          />
+        ))}
+        {rate.count > 0 && dataType === 'snapp' && (
           <SummaryItem type="rate" value={getRateSummaryMessage(rate, dataType)} dataType={dataType} />
         )}
-        <div className={styles.date}>
-          {getStartAndEndDate(ranges.start, ranges.end)}
-        </div>
+        {ranges && (
+          <div className={styles.date}>
+            {getStartAndEndDate(ranges.start, ranges.end)}
+          </div>
+        )}
       </div>
     </div>
   );

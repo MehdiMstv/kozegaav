@@ -25,6 +25,12 @@ export const fetchSingleRidePage = async (
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error(`${response.status}`);
+        } else if (response.status === 500) {
+          return {
+            data: {
+              rides: [],
+            },
+          };
         }
       } else {
         return response.json();
