@@ -2,7 +2,7 @@ import { memo } from 'react';
 
 import type { IconNames } from 'types/IconNames';
 import type { SummaryItemType, SummaryKeys } from 'types/Summary';
-import type { DataSource, SnappTaxiDataStorage, SnappfoodDataStorage } from 'types/Storage';
+import type { DataSource } from 'types/Storage';
 
 import Icon from 'components/Icon';
 import styles from './SummaryItem.module.css';
@@ -16,12 +16,21 @@ type Props = {
   dataType?: DataSource;
 };
 
-const getIconType = {
-  count: 'car' as IconNames,
-  prices: 'money' as IconNames,
-  rate: 'star' as IconNames,
-  distance: 'car' as IconNames,  // Using car icon for distance
-  durations: 'calendar' as IconNames, // Using calendar icon for duration
+const getIconType = (type: Type, dataType: DataSource): IconNames => {
+  switch (type) {
+    case 'count':
+      return dataType === 'snappfood' ? 'delivery' : 'car';
+    case 'prices':
+      return 'money';
+    case 'rate':
+      return 'star';
+    case 'distance':
+      return 'car';
+    case 'durations':
+      return 'calendar';
+    default:
+      return 'car';
+  }
 };
 
 const getIconColor = (dataType: DataSource) => {
@@ -33,14 +42,10 @@ const SummaryItem = ({
   value: { message, unit, description },
   dataType = 'snapp',
 }: Props) => {
-  // Use a default icon if the type is not in getIconType
-  const iconType = getIconType[type as keyof typeof getIconType] || 'car';
-  const iconColor = getIconColor(dataType);
-  
   return (
     <div className={styles.summaryItem}>
       <div className={styles.icon} data-type={dataType}>
-        <Icon type={iconType} color={iconColor} />
+        <Icon type={getIconType(type, dataType)} color={getIconColor(dataType)} />
       </div>
       <div className={styles.wrapper}>
         <div className={styles.content}>
