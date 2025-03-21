@@ -63,7 +63,7 @@ const getTypeFormat: {
   _restaurants: { format: (value) => value },
 };
 
-const getFormattedSummary: {
+export const getFormattedSummary: {
   [type: string]: {
     format: (value: number, dataType?: DataSource) => SummaryItemType;
   };
@@ -72,7 +72,8 @@ const getFormattedSummary: {
     format: (value: number, dataType: DataSource = 'snapp') => {
       return { 
         message: formattedNumber(value), 
-        unit: dataType === 'snapp' ? 'سفر' : 'سفارش' 
+        unit: dataType === 'snapp' ? 'سفر' : 'سفارش',
+        description: dataType === 'snapp' ? 'تعداد سفرها' : 'تعداد سفارشات'
       };
     },
   },
@@ -81,6 +82,16 @@ const getFormattedSummary: {
       return {
         message: getPrice(Number(value), false),
         unit: 'تومان',
+        description: 'مبلغ کل سفارشات'
+      };
+    },
+  },
+  maxPrice: {
+    format: (value: number) => {
+      return {
+        message: getPrice(Number(value), false),
+        unit: 'تومان',
+        description: 'بیشترین سفارش'
       };
     },
   },
@@ -89,6 +100,7 @@ const getFormattedSummary: {
       return {
         message: formattedNumber(value, 2),
         unit: 'کیلومتر',
+        description: 'مسافت طی شده'
       };
     },
   },
@@ -97,6 +109,7 @@ const getFormattedSummary: {
       return {
         message: formattedNumber(value, 0),
         unit: 'دقیقه',
+        description: 'مدت زمان انتظار رسیدن سفارشات'
       };
     },
   },

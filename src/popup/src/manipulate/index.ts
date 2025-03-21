@@ -333,7 +333,6 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
       vendorLongitude,
     } = order;
 
-    
     const date = new Date(startedAtObject.date);
     const persianDate = date.toLocaleString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' as const }).split(' ');
     const year = persianDate[0];
@@ -352,7 +351,35 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
     }
 
     for (const resYear of [year, 'total']) {
-      // add to car
+      // Initialize summary if not exists
+      if (!get(result, [resYear, '_summary'])) {
+        setWith(
+          result,
+          [resYear, '_summary'],
+          {
+            count: 0,
+            prices: 0,
+            distance: 0,
+            durations: 0,
+            maxPrice: 0,  // Add maxPrice to track highest order
+          },
+          Object
+        );
+      }
+
+      // Update summary
+      const summary = get(result, [resYear, '_summary']);
+      if (summary) {
+        summary.count++;
+        summary.prices += totalPrice;
+        summary.maxPrice = Math.max(summary.maxPrice, totalPrice);  // Update maxPrice
+        
+        if ('durations' in summary && typeof summary.durations === 'number') {
+          summary.durations += deliveryTime || 0;
+        }
+      }
+
+      // add to restaurants
       setWith(
         result,
         [resYear, '_restaurants', vendorTitle],
@@ -417,32 +444,6 @@ export const getSnappfoodReport = (orders: SnappfoodOrder[]) => {
         }),
         Object
       );
-
-      // add to overall
-      if (!get(result, [resYear, '_summary'])) {
-        setWith(
-          result,
-          [resYear, '_summary'],
-          {
-            count: 0,
-            prices: 0,
-            distance: 0,
-            durations: 0,
-          },
-          Object
-        );
-      }
-
-      const summary = get(result, [resYear, '_summary']);
-      if (summary) {
-        summary.count++;
-        summary.prices += totalPrice;
-        
-        if ('durations' in summary && typeof summary.durations === 'number') {
-          summary.durations += deliveryTime || 0;
-        }
-      }
-
 
       // add to ranges
       if (!get(result, [resYear, '_ranges'])) {

@@ -70,3 +70,11 @@ export type Orders = CommonData & {
 
 export type RidesData = { [year: string]: Rides };
 export type OrdersData = { [year: string]: Orders };
+
+export type CommonSummary = {
+  count: number;
+  prices: number;
+  distance?: number;
+  durations?: number;
+  maxPrice?: number;
+};

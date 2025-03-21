@@ -232,10 +232,10 @@ const SnappExtension = () => {
     chrome.storage.local.set({ foodResult: data }, () => {
       pendingTimer.current = setTimeout(() => {
         setIsSnappfoodLoading(false);
-        setIsFetching(false);
         handleShowResult(data, true);
       }, 3000);
     });
+        setIsFetching(false);
   };
 
   const handleGetSnappfoodOrders = async (e: MouseEvent<HTMLButtonElement>) => {
