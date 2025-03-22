@@ -31,7 +31,7 @@ You can think of [Iranian version of Uber][snappwiki]. Their public repository i
 
 <img src="assests/Chrome.png" width="800">
 
-1. Unzip the extension, you can download it from GitHub releases or telegram channel
+1. Unzip the extension, you can download it from GitHub releases or the [telegram channel](https://t.me/UselessCodes).
 2. Go to Chrome > Extensions > Manage Extensions and enable Developer Mode
 3. Click on "Load Unpacked" on Chrome Manage extensions page and choose the unzipped folder
 4. Sign in to your Snapp account at [app.snapp.taxi][snapppwa] and your Snappfood account at [snappfood.ir][snappfood]
